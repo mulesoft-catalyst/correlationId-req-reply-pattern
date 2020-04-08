@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting"
+	xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="reply-flow" doc:id="dd0c9283-d1b2-4625-b0a1-0124d9580124" >
+		<amqp:listener doc:name="Listener" doc:id="375ce35a-7e67-4e63-af82-c22c5035d6b2" config-ref="AMQP_Config" queueName="${rabbitmq.addressqueue}" ackMode="AUTO">
+			<amqp:response>
+				<amqp:properties />
+			</amqp:response>
+		</amqp:listener>
+		<scripting:execute engine="groovy" doc:name="Introduce Delay" doc:id="07691e1a-237c-4715-bbc9-403de683172d" >
+			<scripting:code >sleep(5000);
+return payload;</scripting:code>
+		</scripting:execute>
+		<ee:transform doc:name="Generate Random Response" doc:id="b5d99d9a-8775-48aa-a47f-7925d7377fd9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import dw::Crypto
+import fromHex from dw::core::Numbers
+output application/json
+---
+{
+	result : payload ++ "is " ++ if((fromHex(Crypto::SHA1(payload)) mod 2) == 0) ('Invalid') else ('Valid')
+}
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

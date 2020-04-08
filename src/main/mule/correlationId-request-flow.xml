@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp"
+	 xmlns:http="http://www.mulesoft.org/schema/mule/http" 
+	 xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="requestor-flow" doc:id="d8e92a34-d34d-4e1a-bce3-7405b9010241" >
+		<http:listener doc:name="Listener" doc:id="88476dbb-04af-429d-83f3-20714be8d406" config-ref="HTTP_Listener_config" path="/address">
+			<http:error-response statusCode="400" />
+		</http:listener>
+		<set-variable doc:name="Save Payload" doc:id="290893b4-3248-45ab-a168-73359123e11d" variableName="payload" value="#[payload]"/>
+		<amqp:publish-consume doc:name="Request Reply using Correlation ID" doc:id="d7d6a1ee-f3e2-4376-ac6f-68e89c6817e7" config-ref="AMQP_Config" exchangeName="${rabbitmq.addexchange}" sendCorrelationId="ALWAYS" deliveryMode="PERSISTENT">
+			<amqp:message >
+				<amqp:body ><![CDATA[#[payload.event.eventPayload.address.address1]]]></amqp:body>
+				<amqp:properties replyTo="${rabbitmq.addressreplyqueue}"/>
+			</amqp:message>
+		</amqp:publish-consume>
+		<ee:transform doc:name="Update and Send Response" doc:id="bfeeab27-6f01-4ea1-a46a-1a65c5aa0021" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var outputJson = vars.payload
+---
+outputJson mapObject (value, key) -> (key):
+        value  ++ payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

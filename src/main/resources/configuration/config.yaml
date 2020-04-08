@@ -1,0 +1,21 @@
+api:
+  name: "correlationId-req-reply-pattern"
+http:
+  port: "8081"
+  
+rabbitmq:
+  host: "localhost"
+  port: "5672"
+  virtualHost: "dev"
+  username: "guest"
+  password: "guest"
+  addexchange: "address-exchange"
+  addressqueue: "address-queue"
+  addressreplyqueue: "addressreply-queue"
+  
+
+
+retry:
+  threshold: "1"
+  ttl: "5"
+  

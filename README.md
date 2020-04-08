@@ -12,6 +12,7 @@ For simplicity both the requestor and reply flow are bundled into same Mule appl
 ### How?
 
 The following diagram articulates how this is implemented:
+
 ![](./docs/images/RequestReply.gif)
 
 
